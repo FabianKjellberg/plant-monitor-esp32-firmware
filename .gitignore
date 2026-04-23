@@ -1,0 +1,23 @@
+# Build output
+/build/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# ESP-IDF specific
+sdkconfig.old
+sdkconfig.bak
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Python env
+.espressif/
+
+# components
+/managed_components/
