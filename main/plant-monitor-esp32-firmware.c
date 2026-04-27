@@ -14,14 +14,17 @@
 
 #define uS_TO_S_FACTOR 1000000ULL
 #define MAX_WIFI_CONNECTION_RETRY 20
+#define DEBUG_MODE false
 
 void app_main(void)
 {
     printf("starting program\n");
 
     //turn on light (DEBUG)
-    xTaskCreate(led_task, "led_task", 4096, NULL, 5, NULL);
-    led_set_state(LED_STATE_BLINKING_GREEN);
+    if(DEBUG_MODE) {
+        xTaskCreate(led_task, "led_task", 4096, NULL, 5, NULL);
+        led_set_state(LED_STATE_BLINKING_GREEN);
+    }
 
 
     //init GPIO handles
@@ -29,6 +32,9 @@ void app_main(void)
 
     //create body to send
     sensor_reading_body api_body;
+
+    //set mac adress
+    get_mac_addr(api_body.mac_addr, MAC_ADDR_STR_LEN);
 
     //read battery
     battery_init();
@@ -70,12 +76,13 @@ void app_main(void)
         //handle in future? connect bluetooth? save to local storage?
     }
 
-    led_set_state(LED_STATE_OFF);
+    if (DEBUG_MODE) {
+        led_set_state(LED_STATE_OFF);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+
+    //sleep
     printf("going to sleep\n");
-    //sleep;
-
-    vTaskDelay(pdMS_TO_TICKS(1000));
-
-    esp_sleep_enable_timer_wakeup(10 * uS_TO_S_FACTOR);
+    esp_sleep_enable_timer_wakeup(5 * 60 * uS_TO_S_FACTOR);
     esp_deep_sleep_start();
 }
