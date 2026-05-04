@@ -11,6 +11,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "led.h"
+#include "boot.h"
 
 #define uS_TO_S_FACTOR 1000000ULL
 #define MAX_WIFI_CONNECTION_RETRY 20
@@ -19,6 +20,9 @@
 void app_main(void)
 {
     printf("starting program\n");
+
+    bool pair_mode = false;
+    get_should_pair(&pair_mode);
 
     //turn on light (DEBUG)
     if(DEBUG_MODE) {
