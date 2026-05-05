@@ -1,7 +1,7 @@
 #include "boot.h"
 #include "driver/gpio.h"
-#include "freertos/task.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #define BOOT_GPIO_PIN GPIO_NUM_9
 #define HOLD_TIME 5000
@@ -23,11 +23,12 @@ esp_err_t get_should_pair(bool *pair) {
         level = gpio_get_level(BOOT_GPIO_PIN);
         if(level != 0) {
             *pair = false;
-            break;
+            return ESP_OK;
         }
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
     
+    printf("bluetooth pairing mode active");
     return ESP_OK;
 }
