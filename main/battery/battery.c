@@ -35,23 +35,24 @@ esp_err_t battery_init(void) {
 }
 
 esp_err_t battery_read(int *v) {
-  int warm_up;
-  int voltage_mv = 0;
-  int accumulated_voltage_mv = 0;
-  const int iterations = 16;
+    int raw_bits;
+    int voltage_mv;
+    long accumulated_mv = 0; 
+    const int iterations = 16;
 
-  //warmup
-  adc_oneshot_read(adc_handle, ADC_CHANNEL_0, &warm_up);
-  vTaskDelay(pdMS_TO_TICKS(10));
+    // Warmup
+    adc_oneshot_read(adc_handle, ADC_CHANNEL_0, &raw_bits);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
-  for (int i = 0; i < iterations; i++) {
-    adc_oneshot_read(adc_handle, ADC_CHANNEL_0, &voltage_mv);
-    adc_cali_raw_to_voltage(cali_handle, voltage_mv, v);
+    for (int i = 0; i < iterations; i++) {
+        adc_oneshot_read(adc_handle, ADC_CHANNEL_0, &raw_bits);
+        adc_cali_raw_to_voltage(cali_handle, raw_bits, &voltage_mv);
+        accumulated_mv += voltage_mv;
+    }
 
-    accumulated_voltage_mv += voltage_mv;
-  }
-  int avg_at_pin = accumulated_voltage_mv / 16;
-  *v = (avg_at_pin * 122) / 22;
+    int avg_mv_at_pin = accumulated_mv / iterations;
+    
+    *v = (avg_mv_at_pin * 122) / 22; 
 
-  return ESP_OK;
+    return ESP_OK;
 }

@@ -20,6 +20,8 @@ esp_err_t ble_wait_for_wifi_cred(void);
 
 esp_err_t ble_set_pairing_status(ble_pairing_status_t status);
 
+esp_err_t ble_stop();
+
 #ifdef __cplusplus
 }
 #endif

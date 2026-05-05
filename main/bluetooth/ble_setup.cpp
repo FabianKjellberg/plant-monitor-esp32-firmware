@@ -16,13 +16,20 @@ NimBLECharacteristic* pCharStatus;
 ble_pairing_status_t current_ble_status;
 
 class BleEvents : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharactaristics) {
+    void onWrite(NimBLECharacteristic* pCharactaristics, NimBLEConnInfo& connInfo) override {
         if(current_ble_status == BLE_STATUS_CONNECTING || current_ble_status == BLE_STATUS_SUCCESS) {
             printf("device busy or succeeded");
             return;
         }
         
         std::string rxValue = pCharactaristics->getValue();
+
+        printf("RX length: %u\n", (unsigned int)rxValue.length());
+
+        for (size_t i = 0; i < rxValue.length(); i++) {
+            printf("%02X ", (unsigned char)rxValue[i]);
+        }
+        printf("\n");
 
         if(rxValue.length() > 0) {
             size_t del_pos = rxValue.find('|');
@@ -50,6 +57,8 @@ class BleEvents : public NimBLECharacteristicCallbacks {
     }
 };
 
+static BleEvents bleCallbacks;
+
 esp_err_t ble_init(const char* mac_addr) {
 
     ble_wifi_cred_semaphore = xSemaphoreCreateBinary();
@@ -67,13 +76,13 @@ esp_err_t ble_init(const char* mac_addr) {
 
     NimBLECharacteristic *pCharWifi = pService->createCharacteristic(CHARACTERISTIC_UUID_WIFI, NIMBLE_PROPERTY::WRITE);
 
-    pCharWifi->setCallbacks(new BleEvents());
-
-    pService->start();
+    pCharWifi->setCallbacks(&bleCallbacks);
 
     NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID);
     pAdvertising->start();
+
+    printf("bluetooth waiting for connecting devices...");
 
     return ESP_OK;
 }
@@ -105,6 +114,12 @@ esp_err_t ble_set_pairing_status(ble_pairing_status_t status) {
 
     pCharStatus->setValue(statusStr);
     pCharStatus->notify();
+
+    return ESP_OK;
+}
+
+esp_err_t ble_stop(void) {
+    NimBLEDevice::getAdvertising()->stop();
 
     return ESP_OK;
 }

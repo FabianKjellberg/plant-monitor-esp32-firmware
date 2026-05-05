@@ -14,8 +14,8 @@
 #include "boot.h"
 #include "ble_setup.h"
 #include "nvs_flash.h"
+#include "esp_sleep.h"
 
-#define uS_TO_S_FACTOR 1000000ULL
 #define MAX_WIFI_CONNECTION_RETRY 20
 #define DEBUG_MODE false
 
@@ -44,8 +44,12 @@ void app_main(void)
     ESP_ERROR_CHECK(ret);
 
     // check if boot button is pressed continously for 5 seconds
+    esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_causes();
     bool pair_mode = false;
-    get_should_pair(&pair_mode);
+
+    if (cause == ESP_SLEEP_WAKEUP_EXT0 || cause == ESP_SLEEP_WAKEUP_UNDEFINED) {
+        get_should_pair(&pair_mode);
+    }
 
     // activate bluetooth
     if(pair_mode || !is_provisioned()) {
@@ -74,12 +78,15 @@ void app_main(void)
             if(connected) {
                 printf("Successfully connected to wifi");
                 ble_set_pairing_status(BLE_STATUS_SUCCESS);
+
+                vTaskDelay(pdMS_TO_TICKS(100));
             }
             else {
                 printf("Failed connecting double check the input values");
                 ble_set_pairing_status(BLE_STATUS_FAILED);
             }
         }
+        ble_stop();
     }
 
     //init GPIO handles
@@ -103,8 +110,10 @@ void app_main(void)
     bh1750_read_lux(&api_body.lux);
 
     //start wifi chip, connect
-    wifi_init();
-    wifi_connect();
+    if (!is_connected()) { 
+        wifi_init(); 
+        wifi_connect();
+    }
     
     int retries = 0; 
     while(!is_connected() && retries < MAX_WIFI_CONNECTION_RETRY) {
@@ -133,6 +142,5 @@ void app_main(void)
 
     //sleep
     printf("going to sleep\n");
-    esp_sleep_enable_timer_wakeup(5 * 60 * uS_TO_S_FACTOR);
-    esp_deep_sleep_start();
+    prepare_for_sleep();
 }

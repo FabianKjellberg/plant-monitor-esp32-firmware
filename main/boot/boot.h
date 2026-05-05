@@ -5,5 +5,6 @@
 #include <stdbool.h>
 
 esp_err_t get_should_pair(bool *pair);
+esp_err_t prepare_for_sleep();
 
 #endif
