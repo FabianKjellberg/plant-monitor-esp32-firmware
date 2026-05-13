@@ -7,8 +7,15 @@
 #include "freertos/task.h"
 
 void time_sync_init(void) {
+    if (esp_sntp_enabled()) {
+      printf("SNTP already running, skipping init.\n");
+      return;
+    }
+
+    printf("Initializing SNTP...\n");
     esp_sntp_setoperatingmode(ESP_SNTP_OPMODE_POLL);
     esp_sntp_setservername(0, "pool.ntp.org");
+    
     esp_sntp_init();
 }
 

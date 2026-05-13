@@ -18,6 +18,7 @@
 
 #define MAX_WIFI_CONNECTION_RETRY 20
 #define DEBUG_MODE false
+#define uS_TO_S_FACTOR 1000000ULL
 
 void app_main(void)
 {
@@ -125,6 +126,8 @@ void app_main(void)
     if(is_connected()) {
         printf("sending sensor readings to database\n");
         //read time
+        time_sync_init();
+        time_wait_for_sync();
         time_get_iso8601(api_body.read_at, TIMESTAMP_STR_LEN);
 
         //send data to database
@@ -142,5 +145,7 @@ void app_main(void)
 
     //sleep
     printf("going to sleep\n");
-    prepare_for_sleep();
+    //prepare_for_sleep();
+    esp_sleep_enable_timer_wakeup(5 * 60 * uS_TO_S_FACTOR);
+    esp_deep_sleep_start();
 }
